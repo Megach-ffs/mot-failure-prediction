@@ -28,7 +28,7 @@ fig_age = px.bar(
     by_age, x="age_band", y="fail_rate", text_auto=".0%",
     hover_data={"tests": ":,"},
     labels={"age_band": "Vehicle age at test (years)", "fail_rate": "Fail rate"},
-    title="Older cars fail more often",
+    title="Fail rate by vehicle age",
 )
 fig_age.update_yaxes(tickformat=".0%")
 st.plotly_chart(fig_age, use_container_width=True)

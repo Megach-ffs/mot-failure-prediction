@@ -9,6 +9,7 @@ import pandas as pd
 
 from motfail.data import make_label
 
+# Resolves inside the repo because the package is installed in editable mode (`-e .`).
 APP_SAMPLE = Path(__file__).resolve().parents[2] / "data" / "app" / "sample_2025_01.parquet"
 
 AGE_BINS = [0, 3, 6, 9, 12, 15, 20, 200]
@@ -43,8 +44,8 @@ def load_app_sample(path: Path | None = None) -> pd.DataFrame:
         )
     df = pd.read_parquet(path)
     df["fail"] = make_label(df)
-    test_date = pd.to_datetime(df["test_date"])
-    first_use = pd.to_datetime(df["first_use_date"])
+    test_date = pd.to_datetime(df["test_date"], errors="coerce")
+    first_use = pd.to_datetime(df["first_use_date"], errors="coerce")
     df["vehicle_age_years"] = (test_date - first_use).dt.days / 365.25
     df["age_band"] = pd.cut(
         df["vehicle_age_years"], bins=AGE_BINS, labels=AGE_LABELS, right=False

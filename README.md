@@ -4,18 +4,18 @@
 
 **Live app:** https://mot-failure-prediction.streamlit.app/
 
-Predicting whether a car in Great Britain will **fail its annual MOT test**, using only facts known *before* the test: vehicle age, mileage, make and model, fuel type, engine size, region and the previous year's test history.
+Predicting whether a car in Great Britain will **fail its annual MOT test**, using only facts known *before* the test: vehicle age, mileage, make and model, fuel type, engine size and region (previous-year test history planned).
 
 The project has two audiences:
 - **Car buyers and owners:** "How likely is this car to fail, and why?"
 - **Road-safety analysts:** "Which vehicles and regions fail most?"
 
-It includes an end-to-end pipeline (data → EDA → preparation → models → evaluation), a reproducible Jupyter notebook, and an interactive multi-page Streamlit app.
+Planned: an end-to-end pipeline (data → EDA → preparation → models → evaluation), a reproducible Jupyter notebook, and an interactive multi-page Streamlit app.
 
-> Status: in development (November 2026).
+> Status: in development (November 2026). Live now: data pipeline for January 2025 (100k-test app sample), app Home and Explore pages, CI.
 
 ## Data
-DVSA *Anonymised MOT tests and results* (2025 test result extracts, joined with 2024 history and test-item extracts).
+DVSA *Anonymised MOT tests and results*: 2025 test result extracts (January built so far; joins with 2024 history and test-item extracts planned). Details in `data/SOURCE.md`.
 Source: https://www.data.gov.uk/dataset/c63fca52-ae4c-4b75-bab5-8b4735e1a4c9/anonymised-mot-tests-and-results
 
 Contains public sector information licensed under the [Open Government Licence v3.0](https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/).

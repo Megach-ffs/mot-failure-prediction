@@ -27,3 +27,6 @@ def get_sample() -> pd.DataFrame:
     except FileNotFoundError as e:
         st.error(str(e))
         st.stop()
+    except Exception as e:  # noqa: BLE001 — last line of defence: never show users a traceback
+        st.error(f"The app data could not be loaded ({type(e).__name__}: {e}).")
+        st.stop()

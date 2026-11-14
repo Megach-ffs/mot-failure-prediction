@@ -58,3 +58,12 @@ def test_load_app_sample_missing_file_raises(tmp_path):
 def test_app_sample_within_limits():
     assert APP_SAMPLE.stat().st_size <= 20 * 1024 * 1024
     assert len(pd.read_parquet(APP_SAMPLE, columns=["test_id"])) <= 200_000
+
+
+def test_home_shows_error_when_sample_corrupt(monkeypatch, tmp_path):
+    bad = tmp_path / "corrupt.parquet"
+    bad.write_bytes(b"not a parquet file")
+    monkeypatch.setenv("MOTFAIL_APP_SAMPLE", str(bad))
+    at = AppTest.from_file(str(HOME), default_timeout=60).run()
+    assert not at.exception
+    assert len(at.error) >= 1

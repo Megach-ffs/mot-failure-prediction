@@ -1,5 +1,6 @@
 """MOT failure prediction: home page."""
 
+import pandas as pd
 import streamlit as st
 
 from motfail.ui import OGL_NOTE, REPO_URL, get_sample
@@ -9,9 +10,10 @@ st.set_page_config(page_title="MOT failure prediction", page_icon="🚗", layout
 st.title("🚗 Will this car fail its MOT?")
 st.markdown(
     "Every car in Great Britain over three years old needs an annual **MOT** roadworthiness "
-    "test. This app explores millions of real MOT results and, once the models are trained, "
-    "predicts how likely a car is to **fail**. It uses only facts known *before* the test: "
-    "age, mileage, make and model, fuel, engine size, region and the previous test."
+    "test. This app explores a 100,000-test sample of real 2025 MOT results and, once the "
+    "models are trained, will predict how likely a car is to **fail**, using only facts known "
+    "*before* the test (age, mileage, make and model, fuel, engine size, region; previous-test "
+    "history is planned)."
 )
 
 df = get_sample()
@@ -35,4 +37,8 @@ rectification). Both mean the car *arrived* in a failing state.
 - **Evaluate**: model comparison, ROC/PR curves, threshold explorer *(week 3)*
 """
 )
-st.caption(f"Sample: 100,000 initial car MOT tests from January 2025. {OGL_NOTE} · [Source code]({REPO_URL})")
+period = pd.to_datetime(df["test_date"])
+st.caption(
+    f"Sample: {len(df):,} initial car MOT tests, {period.min():%d %b %Y} – {period.max():%d %b %Y}. "
+    f"{OGL_NOTE} · [Source code]({REPO_URL})"
+)
