@@ -1,5 +1,9 @@
 # MOT failure prediction
 
+[![CI](https://github.com/Megach-ffs/mot-failure-prediction/actions/workflows/ci.yml/badge.svg)](https://github.com/Megach-ffs/mot-failure-prediction/actions/workflows/ci.yml)
+
+**Live app:** https://mot-failure-prediction.streamlit.app/
+
 Predicting whether a car in Great Britain will **fail its annual MOT test**, using only facts known *before* the test: vehicle age, mileage, make and model, fuel type, engine size, region and the previous year's test history.
 
 The project has two audiences:
