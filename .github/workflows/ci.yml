@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Install locked environment (Python 3.12 from .python-version)
+        run: uv sync --frozen
+
+      - name: Lint
+        run: uv run ruff check src tests scripts app
+
+      - name: Tests
+        run: uv run pytest -q
+
+      - name: requirements.txt matches uv.lock
+        run: |
+          uv export --no-hashes --no-dev --format requirements-txt -o requirements.txt
+          git diff --exit-code requirements.txt
