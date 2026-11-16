@@ -56,6 +56,9 @@ def iter_filtered_chunks(fileobj: IO[bytes], chunksize: int = 500_000) -> Iterat
         usecols=RESULT_COLUMNS,
         dtype=RESULT_DTYPES,
         chunksize=chunksize,
+        # DVSA writes a quote inside a quoted field as \" (e.g. model "STREETZONE 50 2T 12\"").
+        # Without this, the field ends early and the rest of the row shifts columns.
+        escapechar="\\",
     )
     for chunk in reader:
         yield filter_initial_car_tests(chunk[RESULT_COLUMNS])

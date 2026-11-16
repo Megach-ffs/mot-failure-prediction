@@ -38,3 +38,22 @@ def test_iter_filtered_chunks_on_in_memory_csv():
     assert out["cylinder_capacity"].dtype == "float64"
     assert out["make"].dtype == "string"
     assert out["test_mileage"].isna().sum() == 1  # blank mileage kept as NaN, not dropped
+
+
+# Real rows from the February 2025 extract: DVSA escapes a quote inside a quoted
+# field with a backslash (\"), not by doubling it (""). Also commas inside quotes.
+CSV_QUOTES = b"""test_id,vehicle_id,test_date,test_class_id,test_type,test_result,test_mileage,postcode_area,make,model,colour,fuel_type,cylinder_capacity,first_use_date,completed_date
+1059362667,500261299,2025-02-20,4,NT,F,2729,DN,PEUGEOT,"STREETZONE 50 2T 12\\"",RED,PE,49,2021-05-17,2025-02-20T12:33:56.000Z
+6280,907771080,2025-02-07,4,NT,P,6417,W,JAGUAR,"HISTORIC, SPORTS",SILVER,PE,5700,1965-06-28,2025-02-07T16:04:25.000Z
+7,107,2025-02-08,4,NT,P,1000,B,FORD,FIESTA,RED,DI,1200,2015-01-01,2025-02-08T10:00:00.000Z
+"""
+
+
+def test_backslash_escaped_quotes_do_not_shift_columns():
+    out = pd.concat(iter_filtered_chunks(io.BytesIO(CSV_QUOTES)), ignore_index=True)
+    assert len(out) == 3
+    assert out.loc[0, "model"] == 'STREETZONE 50 2T 12"'
+    assert out.loc[0, "colour"] == "RED"
+    assert out.loc[0, "cylinder_capacity"] == 49
+    assert out.loc[1, "model"] == "HISTORIC, SPORTS"
+    assert list(out["fuel_type"]) == ["PE", "PE", "DI"]
