@@ -23,6 +23,7 @@ from pathlib import Path
 
 import pandas as pd
 import requests
+import urllib3
 from remotezip import RemoteZip
 
 from motfail.data import make_label, write_parquet_atomic
@@ -30,7 +31,7 @@ from motfail.sources import iter_filtered_chunks, member_name, results_zip_url
 
 ROOT = Path(__file__).resolve().parents[1]
 TIMEOUT = (15, 120)  # seconds: (connect, read without receiving any data)
-NETWORK_ERRORS = (requests.RequestException, ConnectionError, TimeoutError)
+NETWORK_ERRORS = (requests.RequestException, urllib3.exceptions.HTTPError, ConnectionError, TimeoutError)
 
 
 def stream_month(url: str, member: str, t0: float) -> tuple[pd.DataFrame, int]:
