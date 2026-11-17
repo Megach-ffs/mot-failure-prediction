@@ -21,29 +21,15 @@ import argparse
 import time
 from pathlib import Path
 
-import pandas as pd
-import requests
-import urllib3
-from remotezip import RemoteZip
-
 from motfail.data import make_label, write_parquet_atomic
-from motfail.sources import iter_filtered_chunks, member_name, results_zip_url
+from motfail.sources import (
+    iter_filtered_chunks,
+    member_name,
+    read_member,
+    results_zip_url,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
-TIMEOUT = (15, 120)  # seconds: (connect, read without receiving any data)
-NETWORK_ERRORS = (requests.RequestException, urllib3.exceptions.HTTPError, ConnectionError, TimeoutError)
-
-
-def stream_month(url: str, member: str, t0: float) -> tuple[pd.DataFrame, int]:
-    """Download one monthly CSV in filtered chunks; return (rows, member size in bytes)."""
-    chunks = []
-    with RemoteZip(url, timeout=TIMEOUT) as z:
-        member_bytes = z.getinfo(member).file_size
-        with z.open(member) as f:
-            for i, chunk in enumerate(iter_filtered_chunks(f)):
-                chunks.append(chunk)
-                print(f"  chunk {i + 1}: kept {len(chunk):,} rows ({time.time() - t0:.0f}s)", flush=True)
-    return pd.concat(chunks, ignore_index=True), member_bytes
 
 
 def main() -> None:
@@ -66,15 +52,7 @@ def main() -> None:
     url, member = results_zip_url(args.year), member_name(args.year, args.month)
     print(f"Streaming {member}\n  from {url}")
     t0 = time.time()
-    for attempt in range(1, args.retries + 1):
-        try:
-            df, member_bytes = stream_month(url, member, t0)
-            break
-        except NETWORK_ERRORS as e:
-            print(f"  attempt {attempt}/{args.retries} failed: {type(e).__name__}: {e}", flush=True)
-            if attempt == args.retries:
-                raise
-            time.sleep(10 * attempt)
+    df, member_bytes = read_member(url, member, iter_filtered_chunks, retries=args.retries)
     fail = make_label(df)
 
     raw_path.parent.mkdir(parents=True, exist_ok=True)

@@ -57,3 +57,21 @@ def test_backslash_escaped_quotes_do_not_shift_columns():
     assert out.loc[0, "cylinder_capacity"] == 49
     assert out.loc[1, "model"] == "HISTORIC, SPORTS"
     assert list(out["fuel_type"]) == ["PE", "PE", "DI"]
+
+
+ITEMS_CSV = b"""test_id,rfr_id,rfr_type_code,mot_test_rfr_location_type_id,dangerous_mark,completed_date
+1696911325,31322,A,7,,2024-01-01T10:59:12.000Z
+868674723,30844,F,3,D,2024-01-01T13:29:29.000Z
+868674723,31940,A,7,,2024-01-01T13:38:44.000Z
+"""
+
+
+def test_iter_item_chunks_filters_by_test_id():
+    from motfail.sources import item_member_name, item_zip_url, iter_item_chunks
+
+    out = pd.concat(iter_item_chunks(io.BytesIO(ITEMS_CSV), test_ids={868674723}))
+    assert list(out.columns) == ["test_id", "rfr_type_code", "dangerous_mark"]
+    assert list(out["rfr_type_code"]) == ["F", "A"]
+    assert out["dangerous_mark"].notna().sum() == 1
+    assert item_zip_url(2024).endswith("dft_test_item_extracts_2024.zip")
+    assert item_member_name(2024, 3).endswith("dft_test_item_extract_202403.csv")
