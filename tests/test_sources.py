@@ -75,3 +75,49 @@ def test_iter_item_chunks_filters_by_test_id():
     assert out["dangerous_mark"].notna().sum() == 1
     assert item_zip_url(2024).endswith("dft_test_item_extracts_2024.zip")
     assert item_member_name(2024, 3).endswith("dft_test_item_extract_202403.csv")
+
+
+def _stored_zip(files: dict[str, bytes]) -> bytes:
+    import zipfile
+
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", compression=zipfile.ZIP_STORED) as z:
+        for name, data in files.items():
+            z.writestr(name, data)
+    return buf.getvalue()
+
+
+def test_member_range_and_part_reader_return_the_exact_member_bytes():
+    import zipfile
+
+    from motfail.sources import RangeReader, member_data_range
+
+    payload = b"".join(b"%d,row %d\n" % (i, i) for i in range(500))
+    blob = _stored_zip({"a/first.csv": b"x" * 123, "a/second.csv": payload})
+    calls = []
+
+    def fetch(start: int, n: int) -> bytes:
+        calls.append((start, n))
+        return blob[start : start + n]
+
+    start, length = member_data_range(zipfile.ZipFile(io.BytesIO(blob)), "a/second.csv", fetch)
+    assert length == len(payload)
+    reader = io.BufferedReader(RangeReader(fetch, start, length, part_size=1000))
+    assert reader.read() == payload
+    assert all(n <= 1000 for _, n in calls[1:])  # fetched in parts, never more than part_size
+    assert len(calls) > 3
+
+
+def test_member_data_range_rejects_compressed_members():
+    import zipfile
+
+    import pytest
+
+    from motfail.sources import member_data_range
+
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", compression=zipfile.ZIP_DEFLATED) as z:
+        z.writestr("c.csv", b"abc" * 100)
+    blob = buf.getvalue()
+    with pytest.raises(ValueError, match="stored"):
+        member_data_range(zipfile.ZipFile(io.BytesIO(blob)), "c.csv", lambda s, n: blob[s : s + n])
