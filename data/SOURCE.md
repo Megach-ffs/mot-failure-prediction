@@ -19,6 +19,7 @@
 | file | contents |
 |---|---|
 | `data/raw/results_2025_MM_initial_cars.parquet` | each month of 2025: all initial car tests with a P/F/PRS outcome (82–109 MB each; **git-ignored**, rebuild below) |
+| `data/processed/mot_2025_history.parquet` | previous-test history features for each sample test (12.3 MB), see below |
 | `data/processed/mot_2025_sample.parquet` | **the analysis sample**: 1,000,000 tests, one per vehicle, stratified by month (26.7 MB). The notebook loads this file. |
 | `data/app/sample_2025_01.parquet` | 100,000 random January tests (seed 42), used by the app until the app moves to the analysis sample |
 | `data/lookup/` | DVSA lookup tables, unchanged |
@@ -52,6 +53,44 @@ All initial car tests in 2025: **33,210,951**. Overall fail rate (F+PRS): **27.6
 2. **1,000,000 tests stratified by month:** each month keeps its exact share of the 31.7M (largest-remainder rounding).
 3. `completed_date` is dropped: it is recorded at the end of the test (leakage).
 
+## Previous-test history (`scripts/build_history.py`)
+Output: `data/processed/mot_2025_history.parquet` (12.3 MB), one row per sample `test_id`.
+
+**Method.** For each sampled 2025 test, take the same vehicle's most recent 2024 initial car test (P/F/PRS) **strictly before** the 2025 test date. A same-day or later test is never used (tested in `tests/test_history.py`). Then count that test's items from the 2024 test-item extracts.
+
+**Coverage.**
+- 949,307 earlier initial tests were found for the sampled vehicles.
+- **909,202 of 1,000,000 sampled tests (90.9%) have a previous test.**
+- The rest are mostly first MOTs (cars at 3 years) or cars whose previous test was before 2024.
+
+| feature | meaning |
+|---|---|
+| `has_prev_test` | 1 if a previous 2024 test exists |
+| `prev_result`, `prev_fail` | its outcome; `prev_fail` = F or PRS |
+| `days_since_prev`, `miles_since_prev` | gap since it |
+| `mileage_rollback` | 1 if the mileage went down |
+| `prev_items_A/F/M/P` | number of items of each type at it |
+| `prev_dangerous` | number of items with a dangerous mark |
+
+**Item type codes.** These are not decoded in the lookup files, so they were checked against outcomes. The table shows the share of items by previous-test result (921k tests):
+
+| result | A | F | M | P |
+|---|---|---|---|---|
+| P (pass) | 0.908 | 0 | 0.092 | 0 |
+| F (fail) | 0.435 | 0.504 | 0.054 | 0.006 |
+| PRS | 0.497 | 0 | 0.066 | 0.437 |
+
+Passed tests carry only A and M items, failed tests carry F items, and PRS tests carry P items but no F items. So: **A** = advisory, **M** = minor defect, **F** = failure item, **P** = failure item rectified at the station.
+
+**First look** (sample):
+- Fail rate after a 2024 pass: **23.8%**
+- after a 2024 fail: **43.0%**
+- with no 2024 test: **20.9%**
+
+**For cleaning** (not yet applied):
+- 374 tests (0.04%) come less than 30 days after the previous test, and 93% of those followed a fail. They are effectively retests across the year boundary.
+- 939 tests show a mileage change of more than 100,000 miles (from −873,599 to +986,317): odometer errors.
+
 ## Data-quality findings
 - **Quote escaping.** DVSA escapes a quote inside a quoted field as `\"`, not the CSV-standard `""`. Example: the model `"STREETZONE 50 2T 12\""` in February 2025. A default CSV reader ends the field early and shifts the rest of the row into the wrong columns. We read with `escapechar="\\"`, tested with the real rows (`tests/test_sources.py`). January was unaffected: the same 2,958,895 rows before and after the fix.
 - **Fuel codes.** `dft_mdr_fuel_type_extract.csv` confirms `ED` = Electric Diesel (a diesel hybrid) and `HY` = Hybrid Electric (Clean).
@@ -60,5 +99,6 @@ All initial car tests in 2025: **33,210,951**. Overall fail rate (F+PRS): **27.6
 ```bash
 for m in $(seq 1 12); do uv run python scripts/build_dataset.py --year 2025 --month $m; done   # about 2 min a month
 uv run python scripts/make_sample.py --year 2025                                               # about 35 s, about 2.5 GB RAM
+uv run python scripts/build_history.py --year 2025                                             # about 45 min, about 1 GB RAM; resumes from data/raw/history/
 ```
-`build_dataset.py` skips months already built (`--force` rebuilds). Reads time out after 120 s without data and are retried 3 times.
+`build_dataset.py` skips months already built (`--force` rebuilds). Downloads use 8 MB HTTP range requests, 4 in flight, each retried up to 5 times; a single long stream was throttled by S3 to about 170 KB/s.
