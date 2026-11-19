@@ -1438,6 +1438,7 @@ dependencies = [
     { name = "remotezip" },
     { name = "requests" },
     { name = "scikit-learn" },
+    { name = "scipy" },
     { name = "seaborn" },
     { name = "streamlit" },
 ]
@@ -1462,6 +1463,7 @@ requires-dist = [
     { name = "remotezip", specifier = ">=0.12.6" },
     { name = "requests", specifier = ">=2.34.2" },
     { name = "scikit-learn", specifier = ">=1.9.1" },
+    { name = "scipy", specifier = ">=1.15" },
     { name = "seaborn", specifier = ">=0.13.2" },
     { name = "streamlit", specifier = ">=1.67.0" },
 ]

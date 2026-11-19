@@ -70,7 +70,8 @@ def test_iter_item_chunks_filters_by_test_id():
     from motfail.sources import item_member_name, item_zip_url, iter_item_chunks
 
     out = pd.concat(iter_item_chunks(io.BytesIO(ITEMS_CSV), test_ids={868674723}))
-    assert list(out.columns) == ["test_id", "rfr_type_code", "dangerous_mark"]
+    assert list(out.columns) == ["test_id", "rfr_id", "rfr_type_code", "dangerous_mark"]
+    assert list(out["rfr_id"]) == [30844, 31940]
     assert list(out["rfr_type_code"]) == ["F", "A"]
     assert out["dangerous_mark"].notna().sum() == 1
     assert item_zip_url(2024).endswith("dft_test_item_extracts_2024.zip")

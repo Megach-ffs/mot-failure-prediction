@@ -31,3 +31,11 @@ def test_lookups_have_unique_codes():
     assert list(fuel.columns) == ["fuel_code", "fuel_name"] and fuel["fuel_code"].is_unique
     assert list(outcome.columns) == ["result_code", "result_name"] and outcome["result_code"].is_unique
     assert {"P", "F", "PRS"} <= set(outcome["result_code"])
+
+
+def test_defect_lookups_have_unique_keys_for_cars():
+    from motfail.load import load_item_detail, load_item_group
+
+    detail, group = load_item_detail(), load_item_group()
+    assert detail["rfr_id"].is_unique and group["test_item_id"].is_unique
+    assert set(detail["test_item_set_section_id"]) <= set(group["test_item_id"])

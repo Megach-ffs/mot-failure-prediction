@@ -14,12 +14,14 @@
 | `dft_test_result_extracts_2024.zip` | each sampled car's previous test | 2026-11-17 |
 | `dft_test_item_extracts_2024.zip` | defects found at that previous test | 2026-11-17 |
 | `lookup.zip`, `dft_mdr_*_extract.csv`, `dft_item_detail_extract.csv` | code meanings (outcomes, fuel types, defect details) | 2026-11-17 |
+| `dft_item_group_extract.csv` | test-item hierarchy (item and section names for defects) | 2026-11-19 |
 
 ## Files in this repo
 | file | contents |
 |---|---|
 | `data/raw/results_2025_MM_initial_cars.parquet` | each month of 2025: all initial car tests with a P/F/PRS outcome (82–109 MB each; **git-ignored**, rebuild below) |
 | `data/processed/mot_2025_history.parquet` | previous-test history features for each sample test (12.3 MB), see below |
+| `data/processed/mot_2024_prev_failure_reasons.csv` | failure-level items (F, P) at the sampled cars' previous tests, counted per defect code `rfr_id` (1,181 codes, 237,383 tests); decoded with the lookups below |
 | `data/processed/mot_2025_sample.parquet` | **the analysis sample**: 1,000,000 tests, one per vehicle, stratified by month (26.7 MB). The notebook loads this file. |
 | `data/app/sample_2025_01.parquet` | 100,000 random January tests (seed 42), used by the app until the app moves to the analysis sample |
 | `data/lookup/` | DVSA lookup tables, unchanged |

@@ -48,8 +48,13 @@ RESULT_DTYPES: dict[str, str] = {
 }
 
 
-ITEM_COLUMNS = ["test_id", "rfr_type_code", "dangerous_mark"]
-ITEM_DTYPES: dict[str, str] = {"test_id": "int64", "rfr_type_code": "string", "dangerous_mark": "string"}
+ITEM_COLUMNS = ["test_id", "rfr_id", "rfr_type_code", "dangerous_mark"]
+ITEM_DTYPES: dict[str, str] = {
+    "test_id": "int64",
+    "rfr_id": "int64",
+    "rfr_type_code": "string",
+    "dangerous_mark": "string",
+}
 
 TIMEOUT = (15, 120)  # seconds: (connect, read without receiving any data)
 NETWORK_ERRORS = (requests.RequestException, urllib3.exceptions.HTTPError, ConnectionError, TimeoutError)

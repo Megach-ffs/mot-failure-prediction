@@ -15,9 +15,9 @@ APP_SAMPLE = Path(__file__).resolve().parents[2] / "data" / "app" / "sample_2025
 AGE_BINS = [0, 3, 6, 9, 12, 15, 20, 200]
 AGE_LABELS = ["<3", "3–5", "6–8", "9–11", "12–14", "15–19", "20+"]
 
-# Display grouping of fuel codes. The raw field mixes codes ("HY") and words
-# ("HYBRID ELECTRIC (CLEAN)"). Provisional: verify against the DVSA lookup
-# tables during week-2 cleaning.
+# Display grouping of fuel codes. The raw field mixes codes ("HY") and the
+# lookup's names ("HYBRID ELECTRIC (CLEAN)"). Verified against DVSA's
+# dft_mdr_fuel_type_extract.csv: ED = Electric Diesel (a diesel hybrid).
 FUEL_GROUPS = {
     "PE": "Petrol",
     "DI": "Diesel",

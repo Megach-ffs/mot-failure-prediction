@@ -10,7 +10,9 @@ Stage 3: stream the 2024 test items (12 months), keep items of those previous
 Per-month downloads are cached in data/raw/history/ (git-ignored), so a rerun
 resumes where it stopped.
 
-Output: data/processed/mot_<year>_history.parquet, one row per sample test_id.
+Outputs:
+  data/processed/mot_<year>_history.parquet               one row per sample test_id
+  data/processed/mot_<year-1>_prev_failure_reasons.csv    failure-level items of those previous tests, per reason
 
 Usage:
   uv run python scripts/build_history.py --year 2025
@@ -131,6 +133,20 @@ def main() -> None:
     ]
     out = out[keep]
     assert len(out) == len(sample) and out["test_id"].is_unique
+
+    # Failure-level items (F = failed, P = rectified at the station) of the previous tests,
+    # aggregated per reason: the EDA's "top failure reasons" (decoded with data/lookup/).
+    fail_items = items[items["rfr_type_code"].isin(["F", "P"])]
+    reasons = (
+        fail_items.groupby("rfr_id")
+        .agg(n_items=("test_id", "size"), n_tests=("test_id", "nunique"))
+        .reset_index()
+        .sort_values("n_tests", ascending=False)
+    )
+    reasons_path = ROOT / "data" / "processed" / f"mot_{prev_year}_prev_failure_reasons.csv"
+    reasons.to_csv(reasons_path, index=False)
+    print(f"{reasons_path.relative_to(ROOT)}: {len(reasons):,} reasons, "
+          f"{fail_items['test_id'].nunique():,} previous tests with a failure-level item")
 
     path = ROOT / "data" / "processed" / f"mot_{args.year}_history.parquet"
     write_parquet_atomic(out, path)
