@@ -89,13 +89,16 @@ Passed tests carry only A and M items, failed tests carry F items, and PRS tests
 - after a 2024 fail: **43.0%**
 - with no 2024 test: **20.9%**
 
-**For cleaning** (not yet applied):
-- 374 tests (0.04%) come less than 30 days after the previous test, and 93% of those followed a fail. They are effectively retests across the year boundary.
-- 939 tests show a mileage change of more than 100,000 miles (from −873,599 to +986,317): odometer errors.
+**Cleaning** (applied by `src/motfail/clean.py`; every rule and its count is in notebook section C.1):
+- 374 tests (0.04%) come less than 30 days after the previous test, and 93% of those followed a fail. They are effectively retests across the year boundary, so they are dropped (the same reason as the one-test-per-vehicle rule).
+- 939 tests show a mileage change of more than 100,000 miles (from −873,599 to +986,317): odometer errors. For 1,348 tests the previous reading was 0. In both cases `miles_since_prev` and `mileage_rollback` are set to missing (2,473 tests in all).
 
 ## Data-quality findings
 - **Quote escaping.** DVSA escapes a quote inside a quoted field as `\"`, not the CSV-standard `""`. Example: the model `"STREETZONE 50 2T 12\""` in February 2025. A default CSV reader ends the field early and shifts the rest of the row into the wrong columns. We read with `escapechar="\\"`, tested with the real rows (`tests/test_sources.py`). January was unaffected: the same 2,958,895 rows before and after the fix.
 - **Fuel codes.** `dft_mdr_fuel_type_extract.csv` confirms `ED` = Electric Diesel (a diesel hybrid) and `HY` = Hybrid Electric (Clean).
+- **Fuel names instead of codes.** 11,818 sample rows hold the name (`ELECTRIC`, `HYBRID ELECTRIC (CLEAN)`) instead of the code; cleaning maps them back with the lookup.
+- **Placeholders** meaning "not known": make `UNCLASSIFIED`/`UNKNOWN UNKNOWN`, model `UNCLASSIFIED`/`-`, colour `NOT STATED`, postcode area `XX`. Cleaning sets them to missing.
+- **Impossible values:** mileage 0 (1,785) or over 500,000 (79, e.g. 999,999); engine size under 50 cc (50, incl. 30 at 0) or over 10,000 cc (13, e.g. 55,000); one car first used the day after its test. Cleaning sets them to missing. Engine sizes from 8,100 to 9,603 cc are plausibly real (Dodge SRT-10, US motorhomes) and are kept.
 
 ## Rebuild
 ```bash

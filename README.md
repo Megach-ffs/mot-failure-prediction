@@ -13,8 +13,8 @@ The project has two audiences:
 The project is an end-to-end pipeline (data → EDA → preparation → models → evaluation) in a reproducible Jupyter notebook, with an interactive multi-page Streamlit app.
 
 > Status: in development (November 2026).
-> - **Done:** data pipeline for all of 2025 (1M-test analysis sample + previous-test history from 2024); notebook sections A (data and joins) and B (first EDA); app Home and Explore pages (100k January sample); CI.
-> - **Planned:** preparation, models, evaluation; app Preprocessing, Train, Predict and Evaluate pages.
+> - **Done:** data pipeline for all of 2025 (1M-test analysis sample + previous-test history from 2024); notebook sections A (data and joins), B (EDA) and C.1–C.3 (cleaning rules with counts, missing-value mechanisms, leakage guard); app Home and Explore pages (100k January sample); CI.
+> - **Planned:** features, split and preprocessing pipeline; models, evaluation; app Preprocessing, Train, Predict and Evaluate pages.
 
 ## Data
 DVSA *Anonymised MOT tests and results*: 2025 test result extracts, joined with the 2024 result and test-item (defect) extracts for each car's previous test. How the files were built, the sampling rules and the data-quality findings are in `data/SOURCE.md`.
