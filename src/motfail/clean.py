@@ -27,13 +27,16 @@ MILEAGE_MAX = 500_000  # above the 99.99th percentile (about 460,000); the value
 MILES_CHANGE_MAX = 100_000  # more than 100,000 miles between two tests at most 2 years apart
 CC_MIN, CC_MAX = 50, 10_000  # no car engine under 50 cc; motorhomes on truck chassis reach 9.6 L
 
-# DVSA placeholder values meaning "not known"
+# DVSA placeholder values meaning "not known". Postcode area "XX" is NOT one:
+# the DVSA user guide (v5.1) says it merges regions with fewer than 5 test
+# stations, so it stays a real level.
 PLACEHOLDERS = {
     "make": ("UNCLASSIFIED", "UNKNOWN UNKNOWN"),
-    "model": ("UNCLASSIFIED", "-"),
+    "model": ("UNCLASSIFIED", "-", "."),
     "colour": ("NOT STATED",),
-    "postcode_area": ("XX",),
 }
+# DVLA gives vehicles with an unknown date of manufacture this first-use date (user guide v5.1)
+UNKNOWN_FIRST_USE = pd.Timestamp("1971-01-01")
 
 # Columns that must never be model features, with the reason.
 NOT_FEATURES = {
@@ -146,6 +149,14 @@ def first_use_after_test(df: pd.DataFrame) -> tuple[pd.DataFrame, int]:
     return out, int(after.sum())
 
 
+def first_use_placeholder(df: pd.DataFrame) -> tuple[pd.DataFrame, int]:
+    """DVLA's stand-in date for an unknown date of manufacture: clear first_use_date."""
+    hit = df["first_use_date"] == UNKNOWN_FIRST_USE
+    out = df.copy()
+    out.loc[hit, "first_use_date"] = pd.NaT
+    return out, int(hit.sum())
+
+
 @dataclass(frozen=True)
 class Rule:
     step: str
@@ -177,6 +188,8 @@ RULES: list[Rule] = [
     Rule(f"engine > {CC_MAX:,} cc", "cylinder_capacity", "set missing",
          partial(set_missing_where, column="cylinder_capacity", condition=lambda s: s > CC_MAX)),
     Rule("first used after the test date", "first_use_date", "set missing", first_use_after_test),
+    Rule("first use 1971-01-01 (DVLA's date for 'unknown')", "first_use_date", "set missing",
+         first_use_placeholder),
 ]
 
 

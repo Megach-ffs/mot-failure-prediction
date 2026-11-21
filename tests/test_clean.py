@@ -92,6 +92,16 @@ def test_first_use_after_test_is_cleared():
     assert n == 1 and out["first_use_date"].isna().tolist() == [True, False]
 
 
+def test_first_use_placeholder_is_cleared():
+    df = pd.DataFrame({"first_use_date": pd.to_datetime(["1971-01-01", "1971-01-02", "2015-04-03"])})
+    out, n = c.first_use_placeholder(df)
+    assert n == 1 and out["first_use_date"].isna().tolist() == [True, False, False]
+
+
+def test_merged_postcode_area_xx_is_kept():
+    assert "postcode_area" not in c.PLACEHOLDERS  # DVSA user guide: XX = merged small regions
+
+
 def _frame():
     return pd.DataFrame({
         "test_id": [1, 2, 3],
