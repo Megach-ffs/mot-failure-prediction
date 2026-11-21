@@ -67,6 +67,7 @@ Output: `data/processed/mot_2025_history.parquet` (12.3 MB), one row per sample 
 - 949,307 earlier initial tests were found for the sampled vehicles.
 - **909,202 of 1,000,000 sampled tests (90.9%) have a previous test.**
 - The rest are mostly first MOTs (cars at 3 years) or cars whose previous test was before 2024.
+- **Limitation:** coverage depends on the test month, rising from 82.5% in January to about 93% from July. Only 2024 is searched, so a January test can look back about 12 months but a December test about 23. A fix (add the 2023 extracts and use a fixed 2-year look-back) is planned.
 
 | feature | meaning |
 |---|---|

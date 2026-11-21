@@ -34,7 +34,7 @@ uv run jupyter lab notebooks/MLDA_CW1.ipynb   # the analysis notebook
 uv run streamlit run app/Home.py          # start the app
 ```
 
-If you prefer pip: `python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt`.
+If you prefer pip: `python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt`. That installs what the app needs; to run the notebook too, add `pip install jupyterlab`. Run everything from the repository root.
 
 ## Licence
 Code: MIT (see `LICENSE`). Data: Open Government Licence v3.0.

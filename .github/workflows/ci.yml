@@ -24,6 +24,9 @@ jobs:
       - name: Tests
         run: uv run pytest -q
 
+      - name: Notebook runs top to bottom
+        run: uv run jupyter nbconvert --to notebook --execute --output "$RUNNER_TEMP/executed.ipynb" notebooks/MLDA_CW1.ipynb
+
       - name: requirements.txt matches uv.lock
         run: |
           uv export --no-hashes --no-dev --format requirements-txt -o requirements.txt
