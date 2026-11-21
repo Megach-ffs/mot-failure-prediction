@@ -16,6 +16,8 @@
 | `lookup.zip`, `dft_mdr_*_extract.csv`, `dft_item_detail_extract.csv` | code meanings (outcomes, fuel types, defect details) | 2026-11-17 |
 | `dft_item_group_extract.csv` | test-item hierarchy (item and section names for defects) | 2026-11-19 |
 
+**Documentation:** DVSA/DfT *MOT testing data user guide* v5.1, https://edh-dvsa-data-gov-uk-files-prod.s3.eu-west-1.amazonaws.com/mot-testing-data-user-guide-v5.1.odt (read 2026-11-21). It defines PRS, the `XX` postcode area and the 1971-01-01 first-use placeholder.
+
 ## Files in this repo
 | file | contents |
 |---|---|
@@ -23,7 +25,8 @@
 | `data/processed/mot_2025_history.parquet` | previous-test history features for each sample test (12.3 MB), see below |
 | `data/processed/mot_2024_prev_failure_reasons.csv` | failure-level items (F, P) at the sampled cars' previous tests, counted per defect code `rfr_id` (1,181 codes, 237,383 tests); decoded with the lookups below |
 | `data/processed/mot_2025_sample.parquet` | **the analysis sample**: 1,000,000 tests, one per vehicle, stratified by month (26.7 MB). The notebook loads this file. |
-| `data/app/sample_2025_01.parquet` | 100,000 random January tests (seed 42), used by the app until the app moves to the analysis sample |
+| `data/app/app_sample_2025.parquet` | the app's data: 100,000 random rows (seed 42) of the cleaned, feature-engineered analysis sample, with each row's `split` (train/validation/test, the notebook's split); built by `scripts/make_app_data.py` |
+| `data/app/cleaning_report.csv` | rows changed by each cleaning rule on the full sample (shown in the app) |
 | `data/lookup/` | DVSA lookup tables, unchanged |
 
 ## Filter and label
@@ -97,7 +100,8 @@ Passed tests carry only A and M items, failed tests carry F items, and PRS tests
 - **Quote escaping.** DVSA escapes a quote inside a quoted field as `\"`, not the CSV-standard `""`. Example: the model `"STREETZONE 50 2T 12\""` in February 2025. A default CSV reader ends the field early and shifts the rest of the row into the wrong columns. We read with `escapechar="\\"`, tested with the real rows (`tests/test_sources.py`). January was unaffected: the same 2,958,895 rows before and after the fix.
 - **Fuel codes.** `dft_mdr_fuel_type_extract.csv` confirms `ED` = Electric Diesel (a diesel hybrid) and `HY` = Hybrid Electric (Clean).
 - **Fuel names instead of codes.** 11,818 sample rows hold the name (`ELECTRIC`, `HYBRID ELECTRIC (CLEAN)`) instead of the code; cleaning maps them back with the lookup.
-- **Placeholders** meaning "not known": make `UNCLASSIFIED`/`UNKNOWN UNKNOWN`, model `UNCLASSIFIED`/`-`, colour `NOT STATED`, postcode area `XX`. Cleaning sets them to missing.
+- **Placeholders** meaning "not known": make `UNCLASSIFIED`/`UNKNOWN UNKNOWN`, model `UNCLASSIFIED`/`-`/`.`, colour `NOT STATED`, and first-use date 1971-01-01 (DVLA's date for an unknown date of manufacture: *MOT testing data user guide* v5.1). Cleaning sets them to missing.
+- **Postcode area `XX` is not a placeholder:** the user guide says it merges regions with fewer than 5 active test stations, so the station cannot be identified. It is kept as a level.
 - **Impossible values:** mileage 0 (1,785) or over 500,000 (79, e.g. 999,999); engine size under 50 cc (50, incl. 30 at 0) or over 10,000 cc (13, e.g. 55,000); one car first used the day after its test. Cleaning sets them to missing. Engine sizes from 8,100 to 9,603 cc are plausibly real (Dodge SRT-10, US motorhomes) and are kept.
 
 ## Rebuild
@@ -105,5 +109,6 @@ Passed tests carry only A and M items, failed tests carry F items, and PRS tests
 for m in $(seq 1 12); do uv run python scripts/build_dataset.py --year 2025 --month $m; done   # about 2 min a month
 uv run python scripts/make_sample.py --year 2025                                               # about 35 s, about 2.5 GB RAM
 uv run python scripts/build_history.py --year 2025                                             # about 45 min, about 1 GB RAM; resumes from data/raw/history/
+uv run python scripts/make_app_data.py                                                         # about 10 s
 ```
 `build_dataset.py` skips months already built (`--force` rebuilds). Downloads use 8 MB HTTP range requests, 4 in flight, each retried up to 5 times; a single long stream was throttled by S3 to about 170 KB/s.
